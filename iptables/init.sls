@@ -115,7 +115,7 @@
         {%- else %}
         iptables.append:
         {%- endif %}
-          - position: last
+          - position: 1
           - table: filter
           - chain: {{ chain }}
           - jump: REJECT
@@ -132,7 +132,7 @@
         {%- else %}
         iptables.append:
         {%- endif %}
-          - position: last
+          - position: 1
           - table: filter
           - chain: {{ chain }}
           - jump: REJECT
