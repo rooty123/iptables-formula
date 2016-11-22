@@ -108,8 +108,12 @@
       {%- if interfaces == '' %}
         {%- for proto in protos %}
       iptables_{{service_name}}_deny_other_{{proto}}:
+        {%- if docker %}
+        iptables.insert:
+        {%- else %}
         iptables.append:
           - position: last
+        {%- endif %}
           - table: filter
           - chain: {{ chain }}
           - jump: REJECT
@@ -121,8 +125,12 @@
         {%- for interface in interfaces %}
           {%- for proto in protos %}
       iptables_{{service_name}}_deny_other_{{proto}}_{{interface}}:
+        {%- if docker %}
+        iptables.insert:
+        {%- else %}
         iptables.append:
           - position: last
+        {%- endif %}
           - table: filter
           - chain: {{ chain }}
           - jump: REJECT
