@@ -10,7 +10,7 @@
     'default': 'Debian'}) %}
 
     {%- if install %}
-      # Install required packages for firewalling      
+      # Install required packages for firewalling
       iptables_packages:
         pkg.installed:
           - pkgs:
@@ -20,7 +20,7 @@
     {%- endif %}
 
     {%- if strict_mode %}
-      # If the firewall is set to strict mode, we'll need to allow some 
+      # If the firewall is set to strict mode, we'll need to allow some
       # that always need access to anything
       iptables_allow_localhost:
         iptables.append:
@@ -38,7 +38,7 @@
           - jump: ACCEPT
           - match: conntrack
           - ctstate: 'RELATED,ESTABLISHED'
-          - save: True            
+          - save: True
 
       # Set the policy to deny everything unless defined
       enable_reject_policy:
@@ -52,19 +52,29 @@
     {%- endif %}
 
   # Generate ipsets for all services that we have information about
-  {%- for service_name, service_details in firewall.get('services', {}).items() %}  
+  {%- for service_name, service_details in firewall.get('services', {}).items() %}
     {% set block_nomatch = service_details.get('block_nomatch', False) %}
     {% set interfaces = service_details.get('interfaces','') %}
     {% set protos = service_details.get('protos',['tcp']) %}
+    {% set docker = service_details.get('docker', False) %}
+    {%- if docker %}
+    {% set chain = 'FORWARD' %}
+    {%- else %}
+    {% set chain = 'INPUT' %}
+    {%- endif %}
 
     # Allow rules for ips/subnets
     {%- for ip in service_details.get('ips_allow', []) %}
       {%- if interfaces == '' %}
         {%- for proto in protos %}
       iptables_{{service_name}}_allow_{{ip}}_{{proto}}:
+        {%- if docker %}
+        iptables.insert:
+        {%- else %}
         iptables.append:
+        {%- endif %}
           - table: filter
-          - chain: INPUT
+          - chain: {{ chain }}
           - jump: ACCEPT
           - source: {{ ip }}
           - dport: {{ service_name }}
@@ -75,9 +85,13 @@
         {%- for interface in interfaces %}
           {%- for proto in protos %}
       iptables_{{service_name}}_allow_{{ip}}_{{proto}}_{{interface}}:
+        {%- if docker %}
+        iptables.insert:
+        {%- else %}
         iptables.append:
+        {%- endif %}
           - table: filter
-          - chain: INPUT
+          - chain: {{ chain }}
           - jump: ACCEPT
           - i: {{ interface }}
           - source: {{ ip }}
@@ -97,7 +111,7 @@
         iptables.append:
           - position: last
           - table: filter
-          - chain: INPUT
+          - chain: {{ chain }}
           - jump: REJECT
           - dport: {{ service_name }}
           - proto: {{ proto }}
@@ -110,7 +124,7 @@
         iptables.append:
           - position: last
           - table: filter
-          - chain: INPUT
+          - chain: {{ chain }}
           - jump: REJECT
           - i: {{ interface }}
           - dport: {{ service_name }}
@@ -120,20 +134,20 @@
         {%- endfor %}
       {%- endif %}
 
-    {%- endif %}    
+    {%- endif %}
 
   {%- endfor %}
 
   # Generate rules for NAT
-  {%- for service_name, service_details in firewall.get('nat', {}).items() %}  
+  {%- for service_name, service_details in firewall.get('nat', {}).items() %}
     {%- for ip_s, ip_ds in service_details.get('rules', {}).items() %}
       {%- for ip_d in ip_ds %}
       iptables_{{service_name}}_allow_{{ip_s}}_{{ip_d}}:
         iptables.append:
-          - table: nat 
-          - chain: POSTROUTING 
+          - table: nat
+          - chain: POSTROUTING
           - jump: MASQUERADE
-          - o: {{ service_name }} 
+          - o: {{ service_name }}
           - source: {{ ip_s }}
           - destination: {{ip_d}}
           - save: True
