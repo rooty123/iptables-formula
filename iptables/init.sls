@@ -70,7 +70,7 @@
       iptables_{{service_name}}_allow_{{ip}}_{{proto}}:
         {%- if docker %}
         iptables.insert:
-          - position: last
+          - position: 1
         {%- else %}
         iptables.append:
         {%- endif %}
@@ -88,7 +88,7 @@
       iptables_{{service_name}}_allow_{{ip}}_{{proto}}_{{interface}}:
         {%- if docker %}
         iptables.insert:
-          - position: last
+          - position: 1
         {%- else %}
         iptables.append:
         {%- endif %}
