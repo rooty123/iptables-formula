@@ -51,6 +51,9 @@
             - iptables: iptables_allow_established
     {%- endif %}
 
+/sbin/iptables -F FORWARD:
+    cmd.run
+
   # Generate ipsets for all services that we have information about
   {%- for service_name, service_details in firewall.get('services', {}).items() %}
     {% set block_nomatch = service_details.get('block_nomatch', False) %}
@@ -64,9 +67,6 @@
     {%- endif %}
 
     {%- if docker %}
-     /sbin/iptables -F FORWARD:
-         cmd.run
-         
      {%- for ip in service_details.get('ips_allow', []) %}
        {%- for proto in protos %}
         iptables_{{service_name}}_allow_{{ip}}_docker:
