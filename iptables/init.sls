@@ -66,16 +66,16 @@
     {%- if docker %}
      {%- for ip in service_details.get('ips_allow', []) %}
        {%- for proto in protos %}
-        iptables_{{service_name}}_allow_{{ip}}_docker:
-            iptables.insert:
-              - position: 1
-              - table: filter
-              - chain: {{ chain }}
-              - jump: DOCKER
-              - source: {{ ip }}
-              - dport: {{ service_name }}
-              - proto: {{ proto }}
-              - save: True
+      iptables_{{service_name}}_allow_{{ip}}_docker:
+        iptables.insert:
+          - position: 1
+          - table: filter
+          - chain: {{ chain }}
+          - jump: DOCKER
+          - source: {{ ip }}
+          - dport: {{ service_name }}
+          - proto: {{ proto }}
+          - save: True
        {%- endfor %}
      {%- endfor %}
     {%- endif %}
