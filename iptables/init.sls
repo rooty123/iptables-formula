@@ -51,9 +51,6 @@
             - iptables: iptables_allow_established
     {%- endif %}
 
-/sbin/iptables -F FORWARD:
-    cmd.run
-
   # Generate ipsets for all services that we have information about
   {%- for service_name, service_details in firewall.get('services', {}).items() %}
     {% set block_nomatch = service_details.get('block_nomatch', False) %}
